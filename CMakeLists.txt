@@ -5,6 +5,8 @@ set(FILES
     include/tlsf.h
     src/tlsf.cpp
     src/config.h
+    src/main.cpp
     )
 
-add_library(wlib-tlsf ${FILES})
+add_executable(wlib-tlsf ${FILES})
+target_include_directories(wlib-tlsf PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)

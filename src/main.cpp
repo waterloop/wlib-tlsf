@@ -1,14 +1,36 @@
 #include <tlsf.h>
 #include <stdio.h>
+#include <string.h>
 
-static char mem[1024];
+enum {
+    POOL_SIZE = 1024
+};
+
+static char s_pool[POOL_SIZE];
+
+struct data {
+    int ival;
+    double fval;
+    char strval[32];
+};
+
+static void print_data(data *pData) {
+    printf("ival: %i\nfval: %f\nstrval: %s\n",
+        pData->ival, pData->fval, pData->strval);
+}
 
 int main(int argc, char *argv[]) {
-    printf("hello\n");
-    tlsfptr_t pMem = (tlsfptr_t) mem;
-    if (mem % ALIGN_SIZE != 0) {
-        printf("Not aligned\n");
-    }
-    memset(mem, 0, 1024);
-    tlsf_t tlsf = tlsf_create_with_pool(mem, 1024);
+    static char string[] = "Hello World";
+
+    printf("control_t size: %i\n", tlsf_size());
+
+    tlsf_t instance = tlsf_create_with_pool(s_pool, POOL_SIZE);
+
+    auto pData = static_cast<data *>(tlsf_malloc(instance, sizeof(data)));
+    pData->ival = -672645;
+    pData->fval = 684.23e4;
+    strcpy(pData->strval, string);
+    print_data(pData);
+
+    tlsf_destroy(instance);
 }
