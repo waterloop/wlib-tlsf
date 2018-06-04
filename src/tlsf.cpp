@@ -327,9 +327,9 @@ static constexpr size_t block_start_offset =
 ** the prev_phys_block field, and no larger than the number of addressable
 ** bits for FL_INDEX.
 */
-static const size_t block_size_min = 
+static constexpr size_t block_size_min = 
 	sizeof(block_header_t) - sizeof(block_header_t*);
-static const size_t block_size_max = tlsf_cast(size_t, 1) << FL_INDEX_MAX;
+static constexpr size_t block_size_max = tlsf_cast(size_t, 1) << FL_INDEX_MAX;
 
 
 /* The TLSF control structure. */
@@ -804,43 +804,6 @@ static void control_construct(control_t* control)
 }
 
 /*
-** Debugging utilities.
-*/
-
-typedef struct integrity_t
-{
-	int prev_status;
-	int status;
-} integrity_t;
-
-#define tlsf_insist(x) { tlsf_assert(x); if (!(x)) { status--; } }
-
-static void integrity_walker(void* ptr, size_t size, int used, void* user)
-{
-	block_header_t* block = block_from_ptr(ptr);
-	integrity_t* integ = tlsf_cast(integrity_t*, user);
-	const int this_prev_status = block_is_prev_free(block) ? 1 : 0;
-	const int this_status = block_is_free(block) ? 1 : 0;
-	const size_t this_block_size = block_size(block);
-
-	int status = 0;
-	(void)used;
-	tlsf_insist(integ->prev_status == this_prev_status && "prev status incorrect");
-	tlsf_insist(size == this_block_size && "block size incorrect");
-
-	integ->prev_status = this_status;
-	integ->status += status;
-}
-
-#undef tlsf_insist
-
-static void default_walker(void* ptr, size_t size, int used, void* user)
-{
-	(void)user;
-	dprintf("\t%p %s size: %x (%p)\n", ptr, used ? "used" : "free", (unsigned int)size, block_from_ptr(ptr));
-}
-
-/*
 ** Size of the TLSF structures in a given memory block passed to
 ** tlsf_create, equal to the size of a control_t
 */
@@ -925,43 +888,8 @@ void tlsf_remove_pool(tlsf_t tlsf, pool_t pool)
 ** TLSF main interface.
 */
 
-#if _DEBUG
-int test_ffs_fls()
-{
-	/* Verify ffs/fls work properly. */
-	int rv = 0;
-	rv += (tlsf_ffs(0) == -1) ? 0 : 0x1;
-	rv += (tlsf_fls(0) == -1) ? 0 : 0x2;
-	rv += (tlsf_ffs(1) == 0) ? 0 : 0x4;
-	rv += (tlsf_fls(1) == 0) ? 0 : 0x8;
-	rv += (tlsf_ffs(0x80000000) == 31) ? 0 : 0x10;
-	rv += (tlsf_ffs(0x80008000) == 15) ? 0 : 0x20;
-	rv += (tlsf_fls(0x80000008) == 31) ? 0 : 0x40;
-	rv += (tlsf_fls(0x7FFFFFFF) == 30) ? 0 : 0x80;
-
-#if defined (TLSF_64BIT)
-	rv += (tlsf_fls_sizet(0x80000000) == 31) ? 0 : 0x100;
-	rv += (tlsf_fls_sizet(0x100000000) == 32) ? 0 : 0x200;
-	rv += (tlsf_fls_sizet(0xffffffffffffffff) == 63) ? 0 : 0x400;
-#endif
-
-	if (rv)
-	{
-		dprintf("test_ffs_fls: %x ffs/fls tests failed.\n", rv);
-	}
-	return rv;
-}
-#endif
-
 tlsf_t tlsf_create(void* mem)
 {
-#if _DEBUG
-	if (test_ffs_fls())
-	{
-		return 0;
-	}
-#endif
-
 	if (((tlsfptr_t)mem % ALIGN_SIZE) != 0)
 	{
 		dprintf("tlsf_create: Memory must be aligned to %u bytes.\n",
