@@ -4,7 +4,7 @@ project(wlib-tlsf)
 set(FILES
     include/tlsf.h
     src/tlsf.cpp
-    src/config.h
+    src/internal.h
     src/main.cpp
     )
 

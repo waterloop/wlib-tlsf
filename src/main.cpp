@@ -23,6 +23,8 @@ int main(int argc, char *argv[]) {
     static char string[] = "Hello World";
 
     printf("control_t size: %i\n", tlsf_size());
+    printf("pool overhead: %i\n", tlsf_pool_overhead());
+    printf("alloc overhead: %i\n", tlsf_alloc_overhead());
 
     tlsf_t instance = tlsf_create_with_pool(s_pool, POOL_SIZE);
 
@@ -31,6 +33,7 @@ int main(int argc, char *argv[]) {
     pData->fval = 684.23e4;
     strcpy(pData->strval, string);
     print_data(pData);
+    tlsf_free(instance, pData);
 
     tlsf_destroy(instance);
 }
